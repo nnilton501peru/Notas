@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV MAESTRO - Mauricio</title>
+    <style>
+        body { background-color: #121212; color: #00ff00; font-family: sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 450px; }
+        .bloque { background-color: #1e1e1e; border: 2px solid #00ff00; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 0 10px rgba(0,255,0,0.1); }
+        h2 { margin-top: 0; font-size: 1.2rem; text-align: center; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; background-color: #00ff00; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 5px; }
+        .btn-copy { background-color: #00e5ff; }
+        #toast { visibility: hidden; background: #333; color: #00e5ff; padding: 10px 20px; border-radius: 20px; position: fixed; bottom: 30px; border: 1px solid #00e5ff; opacity: 0; transition: 0.4s; }
+        #toast.show { visibility: visible; opacity: 1; }
+        /* La firma */
+        .firma { color: #555; font-size: 0.7rem; text-align: center; margin-top: 10px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="bloque">
+            <h2>🚀 CREAR ENLACE</h2>
+            <input type="text" id="host" placeholder="Servidor (http://...)">
+            <input type="text" id="user" placeholder="Usuario">
+            <input type="text" id="pass" placeholder="Contraseña">
+            <button class="btn" onclick="crear()">GENERAR M3U</button>
+        </div>
+
+        <div class="bloque">
+            <h2>✂️ DESTRIPAR M3U</h2>
+            <textarea id="entrada" rows="2" placeholder="Pega el enlace largo aquí..."></textarea>
+            <button class="btn" onclick="destripar()">DESARMAR</button>
+        </div>
+
+        <div class="bloque" style="border-color: #00e5ff;">
+            <h2 style="color: #00e5ff;">📋 RESULTADO</h2>
+            <textarea id="res" rows="5" readonly></textarea>
+            <button class="btn btn-copy" id="copy-btn" onclick="copiar()">COPIAR SILENCIOSO</button>
+            <button onclick="limpiar()" style="background:none; border:none; color:#666; width:100%; margin-top:10px; text-decoration:underline;">LIMPIAR TODO</button>
+            <div class="firma">Desarrollado por Mauricio - Tacna 2026</div>
+        </div>
+    </div>
+
+    <div id="toast">¡Copiado con éxito!</div>
+
+    <script>
+        function crear() {
+            let h = document.getElementById('host').value.trim();
+            let u = document.getElementById('user').value.trim();
+            let p = document.getElementById('pass').value.trim();
+            if(!h || !u || !p) return;
+            if(h.endsWith('/')) h = h.slice(0,-1);
+            document.getElementById('res').value = h + "/get.php?username=" + u + "&password=" + p + "&type=m3u_plus&output=ts";
+        }
+
+        function destripar() {
+            let val = document.getElementById('entrada').value.trim();
+            if(!val) return;
+            try {
+                let urlObj = new URL(val);
+                let hostFull = "";
+                if (val.includes(':') && !urlObj.origin.includes(':', 6)) {
+                    let parts = val.split('/get.php');
+                    hostFull = parts[0];
+                } else {
+                    hostFull = urlObj.origin;
+                }
+                let params = new URLSearchParams(urlObj.search);
+                let u = params.get("username") || params.get("user");
+                let p = params.get("password") || params.get("pass");
+                if(u && p) {
+                    document.getElementById('res').value = "HOST: " + hostFull + "\nUSER: " + u + "\nPASS: " + p;
+                    document.getElementById('host').value = hostFull;
+                    document.getElementById('user').value = u;
+                    document.getElementById('pass').value = p;
+                }
+            } catch(e) { document.getElementById('res').value = "Error en formato"; }
+        }
+
+        function copiar() {
+            let area = document.getElementById('res');
+            if(!area.value) return;
+            navigator.clipboard.writeText(area.value).then(() => {
+                let b = document.getElementById('copy-btn');
+                let t = document.getElementById('toast');
+                b.innerText = "¡COPIADO!";
+                b.style.backgroundColor = "#fff";
+                t.className = "show";
+                setTimeout(() => { b.innerText = "COPIAR SILENCIOSO"; b.style.backgroundColor = "#00e5ff"; t.className = ""; }, 1200);
+            });
+        }
+
+        function limpiar() { document.querySelectorAll('input, textarea').forEach(e => e.value = ''); }
+    </script>
+</body>
+</html>
